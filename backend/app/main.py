@@ -1,4 +1,5 @@
 import random, math
+from typing import Optional
 import numpy as np
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -16,6 +17,7 @@ class VolumeRequest(BaseModel):
 
 
 class ROIRequest(BaseModel):
+    id: Optional[str] = None
     center: list = [32, 32, 32]
     radius: int = 10
     label: str = "lesion"
@@ -142,6 +144,7 @@ def analyze_roi(req: ROIAnalyzeRequest):
         center = roi.get("center", [32, 32, 32])
         radius = roi.get("radius", 8)
         label = roi.get("label", "roi")
+        roi_id = roi.get("id")
 
         # Extract voxels within sphere
         voxels = []
@@ -158,7 +161,7 @@ def analyze_roi(req: ROIAnalyzeRequest):
 
         if voxels:
             arr = np.array(voxels)
-            results.append({
+            result = {
                 "label": label,
                 "center": center,
                 "radius": radius,
@@ -168,7 +171,10 @@ def analyze_roi(req: ROIAnalyzeRequest):
                 "max": round(float(np.max(arr)), 2),
                 "voxelCount": len(voxels),
                 "histogram": np.histogram(arr, bins=10, range=(float(np.min(arr)), float(np.max(arr))))[0].tolist()
-            })
+            }
+            if roi_id is not None:
+                result["id"] = roi_id
+            results.append(result)
 
     return {"rois": results}
 

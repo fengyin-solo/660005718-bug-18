@@ -8,6 +8,7 @@ export interface VolumeData {
 }
 
 export interface ROIResult {
+  id?: string
   label: string; center: number[]; radius: number
   mean: number; std: number; min: number; max: number; voxelCount: number
   histogram: number[]

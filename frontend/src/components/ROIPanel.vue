@@ -16,7 +16,7 @@
     <el-button type="success" size="small" @click="analyze" :loading="store.loading" :disabled="!rois.length" style="margin-top:8px">📊 分析ROI</el-button>
 
     <div v-if="store.roiResults.length" class="results">
-      <div v-for="r in store.roiResults" :key="r.label" class="roi-result">
+      <div v-for="r in store.roiResults" :key="r.id ?? `${r.label}-${r.center.join(',')}-${r.radius}`" class="roi-result">
         <div class="r-label">{{ r.label }}</div>
         <div class="r-stats">
           <div class="stat"><span>均值</span><b>{{ r.mean }}</b> HU</div>
@@ -35,12 +35,16 @@ import { ref } from 'vue'
 import { useImagingStore } from '../store/imaging'
 const store = useImagingStore()
 
-interface ROIDef { label: string; center: number[]; radius: number }
+function createRoiId() {
+  return crypto.randomUUID?.() ?? `${Date.now()}-${Math.random().toString(16).slice(2)}`
+}
+
+interface ROIDef { id: string; label: string; center: number[]; radius: number }
 const rois = ref<ROIDef[]>([
-  { label: 'lesion1', center: [30, 28, 32], radius: 6 }
+  { id: createRoiId(), label: 'lesion1', center: [30, 28, 32], radius: 6 }
 ])
 
-function addROI() { rois.value.push({ label: `roi-${rois.value.length+1}`, center: [32, 32, 32], radius: 8 }) }
+function addROI() { rois.value.push({ id: createRoiId(), label: `roi-${rois.value.length+1}`, center: [32, 32, 32], radius: 8 }) }
 function removeROI(i: number) { rois.value.splice(i, 1) }
 function analyze() { store.analyzeROI(rois.value.map(r => ({...r}))) }
 </script>
