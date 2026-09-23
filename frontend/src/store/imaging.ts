@@ -20,6 +20,8 @@ export const useImagingStore = defineStore('imaging', () => {
       })
       volumeData.value = data
       mprSlice.value = { axial: 32, coronal: 32, sagittal: 32 }
+      // 新影像载入后清空上一影像的测量结果，统计面板不再展示旧均值/体素数
+      roiResults.value = []
     } finally { loading.value = false }
   }
 
@@ -27,7 +29,10 @@ export const useImagingStore = defineStore('imaging', () => {
     loading.value = true
     try {
       const { data } = await axios.post('/api/roi', { volume: volumeData.value?.volume, rois })
-      roiResults.value = data.rois
+      // 以本次提交的全部标记为准：同一标记(按标签)重测只保留最新一条，不追加旧结果
+      const latestByLabel = new Map<string, ROIResult>()
+      for (const r of data.rois as ROIResult[]) latestByLabel.set(r.label, r)
+      roiResults.value = [...latestByLabel.values()]
     } finally { loading.value = false }
   }
 
